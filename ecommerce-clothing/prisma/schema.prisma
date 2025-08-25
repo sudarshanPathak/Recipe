@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// Product model defined once at the bottom with orderItems back-relation
+
+model Order {
+  id            String      @id @default(cuid())
+  user          User?       @relation(fields: [userId], references: [id])
+  userId        String?
+  emailSnapshot String
+  totalCents    Int
+  status        String      @default("PAID")
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model OrderItem {
+  id         String  @id @default(cuid())
+  order      Order   @relation(fields: [orderId], references: [id])
+  orderId    String
+  product    Product @relation(fields: [productId], references: [id])
+  productId  String
+  unitPriceCents Int
+  quantity   Int
+}
+
+// Note: Using string for status due to SQLite enum limitations
+
+// Add back-relation on Product
+model Product {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  priceCents  Int
+  imageUrl    String
+  inStock     Int       @default(0)
+  category    Category  @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orderItems  OrderItem[]
+}
+
